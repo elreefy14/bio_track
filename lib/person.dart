@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 class Person {
   final String name;
   final Uint8List faceJpg;
