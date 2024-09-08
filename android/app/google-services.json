@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "463431603925",
+    "project_id": "bio-track-a6dba",
+    "storage_bucket": "bio-track-a6dba.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:463431603925:android:be79866cdcda37bfd5b45c",
+        "android_client_info": {
+          "package_name": "com.kbyai.facerecognition_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeMbpj_andxiIl7jfsFkCbAF-1VJK5EDA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

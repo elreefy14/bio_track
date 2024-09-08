@@ -1,4 +1,5 @@
 // ignore_for_file: depend_on_referenced_packages
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math';
@@ -11,12 +12,18 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io' show Platform;
 import 'about.dart';
+import 'firebase_options.dart';
 import 'settings.dart';
 import 'person.dart';
 import 'personview.dart';
 import 'facedetectionview.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -68,28 +75,28 @@ class MyHomePageState extends State<MyHomePage> {
       if (Platform.isAndroid) {
         await _facesdkPlugin
             .setActivation(
-            "CFO+UUpNLaDMlmdjoDlhBMbgCwT27CzQJ4xHpqe9rDOErwoEUeCGPRTfQkZEAFAFdO0+rTNRIwnQ"
-           "wpqqGxBbfnLkfyFeViVS5bpWZFk15QXP3ZtTEuU1rK5zsFwcZrqRUxsG9dXImc+Vw5Ddc9zBp9GE"
-           "UuDycHLqC9KgQGVb0TS2u9Kz67HQOSDw9hskjBpjRbqiG+F/h5DBLPzjgFh1Y6vzgg6I59FzTOcd"
-           "rdEbX7kI15Nwgf1hvHGtSgON/a0Fmw+XNdnxH2pVY96mcTemHYZAtxh8lA/t1DtTyZXpHjW8N6nq"
-           "4UN2YDlKLXSrDzLpLHJmBsdpH71AXb7dfAq94Q==")
+                "CFO+UUpNLaDMlmdjoDlhBMbgCwT27CzQJ4xHpqe9rDOErwoEUeCGPRTfQkZEAFAFdO0+rTNRIwnQ"
+                "wpqqGxBbfnLkfyFeViVS5bpWZFk15QXP3ZtTEuU1rK5zsFwcZrqRUxsG9dXImc+Vw5Ddc9zBp9GE"
+                "UuDycHLqC9KgQGVb0TS2u9Kz67HQOSDw9hskjBpjRbqiG+F/h5DBLPzjgFh1Y6vzgg6I59FzTOcd"
+                "rdEbX7kI15Nwgf1hvHGtSgON/a0Fmw+XNdnxH2pVY96mcTemHYZAtxh8lA/t1DtTyZXpHjW8N6nq"
+                "4UN2YDlKLXSrDzLpLHJmBsdpH71AXb7dfAq94Q==")
             .then((value) => facepluginState = value ?? -1);
-    } else {
-    await _facesdkPlugin
-        .setActivation(
-    "nWsdDhTp12Ay5yAm4cHGqx2rfEv0U+Wyq/tDPopH2yz6RqyKmRU+eovPeDcAp3T3IJJYm2LbPSEz"
-    "+e+YlQ4hz+1n8BNlh2gHo+UTVll40OEWkZ0VyxkhszsKN+3UIdNXGaQ6QL0lQunTwfamWuDNx7Ss"
-    "efK/3IojqJAF0Bv7spdll3sfhE1IO/m7OyDcrbl5hkT9pFhFA/iCGARcCuCLk4A6r3mLkK57be4r"
-    "T52DKtyutnu0PDTzPeaOVZRJdF0eifYXNvhE41CLGiAWwfjqOQOHfKdunXMDqF17s+LFLWwkeNAD"
-    "PKMT+F/kRCjnTcC8WPX3bgNzyUBGsFw9fcneKA==")
-        .then((value) => facepluginState = value ?? -1);
-    }
+      } else {
+        await _facesdkPlugin
+            .setActivation(
+                "nWsdDhTp12Ay5yAm4cHGqx2rfEv0U+Wyq/tDPopH2yz6RqyKmRU+eovPeDcAp3T3IJJYm2LbPSEz"
+                "+e+YlQ4hz+1n8BNlh2gHo+UTVll40OEWkZ0VyxkhszsKN+3UIdNXGaQ6QL0lQunTwfamWuDNx7Ss"
+                "efK/3IojqJAF0Bv7spdll3sfhE1IO/m7OyDcrbl5hkT9pFhFA/iCGARcCuCLk4A6r3mLkK57be4r"
+                "T52DKtyutnu0PDTzPeaOVZRJdF0eifYXNvhE41CLGiAWwfjqOQOHfKdunXMDqF17s+LFLWwkeNAD"
+                "PKMT+F/kRCjnTcC8WPX3bgNzyUBGsFw9fcneKA==")
+            .then((value) => facepluginState = value ?? -1);
+      }
 
-    if (facepluginState == 0) {
-    await _facesdkPlugin
-        .init()
-        .then((value) => facepluginState = value ?? -1);
-    }
+      if (facepluginState == 0) {
+        await _facesdkPlugin
+            .init()
+            .then((value) => facepluginState = value ?? -1);
+      }
     } catch (e) {}
 
     List<Person> personList = await loadAllPersons();
@@ -99,8 +106,8 @@ class MyHomePageState extends State<MyHomePage> {
     int? livenessLevel = prefs.getInt("liveness_level");
 
     try {
-    await _facesdkPlugin
-        .setParam({'check_liveness_level': livenessLevel ?? 0});
+      await _facesdkPlugin
+          .setParam({'check_liveness_level': livenessLevel ?? 0});
     } catch (e) {}
 
     // If the widget was removed from the tree while the asynchronous platform
@@ -109,26 +116,26 @@ class MyHomePageState extends State<MyHomePage> {
     if (!mounted) return;
 
     if (facepluginState == -1) {
-    warningState = "Invalid license!";
-    visibleWarning = true;
+      warningState = "Invalid license!";
+      visibleWarning = true;
     } else if (facepluginState == -2) {
-    warningState = "License expired!";
-    visibleWarning = true;
+      warningState = "License expired!";
+      visibleWarning = true;
     } else if (facepluginState == -3) {
-    warningState = "Invalid license!";
-    visibleWarning = true;
+      warningState = "Invalid license!";
+      visibleWarning = true;
     } else if (facepluginState == -4) {
-    warningState = "No activated!";
-    visibleWarning = true;
+      warningState = "No activated!";
+      visibleWarning = true;
     } else if (facepluginState == -5) {
-    warningState = "Init error!";
-    visibleWarning = true;
+      warningState = "Init error!";
+      visibleWarning = true;
     }
 
     setState(() {
-    _warningState = warningState;
-    _visibleWarning = visibleWarning;
-    widget.personList = personList;
+      _warningState = warningState;
+      _visibleWarning = visibleWarning;
+      widget.personList = personList;
     });
   }
 
@@ -232,7 +239,7 @@ class MyHomePageState extends State<MyHomePage> {
       if (image == null) return;
 
       var rotatedImage =
-      await FlutterExifRotation.rotateImage(path: image.path);
+          await FlutterExifRotation.rotateImage(path: image.path);
 
       final faces = await _facesdkPlugin.extractFaces(rotatedImage.path);
       for (var face in faces) {
@@ -305,10 +312,10 @@ class MyHomePageState extends State<MyHomePage> {
                           padding: const EdgeInsets.only(top: 10, bottom: 10),
                           // foregroundColor: Colors.white70,
                           backgroundColor:
-                          Theme.of(context).colorScheme.primaryContainer,
+                              Theme.of(context).colorScheme.primaryContainer,
                           shape: const RoundedRectangleBorder(
                             borderRadius:
-                            BorderRadius.all(Radius.circular(12.0)),
+                                BorderRadius.all(Radius.circular(12.0)),
                           )),
                       onPressed: enrollPerson),
                 ),
@@ -323,18 +330,18 @@ class MyHomePageState extends State<MyHomePage> {
                       style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.only(top: 10, bottom: 10),
                           backgroundColor:
-                          Theme.of(context).colorScheme.primaryContainer,
+                              Theme.of(context).colorScheme.primaryContainer,
                           shape: const RoundedRectangleBorder(
                             borderRadius:
-                            BorderRadius.all(Radius.circular(12.0)),
+                                BorderRadius.all(Radius.circular(12.0)),
                           )),
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) => FaceRecognitionView(
-                                personList: widget.personList,
-                              )),
+                                    personList: widget.personList,
+                                  )),
                         );
                       }),
                 ),
@@ -353,18 +360,18 @@ class MyHomePageState extends State<MyHomePage> {
                       style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.only(top: 10, bottom: 10),
                           backgroundColor:
-                          Theme.of(context).colorScheme.primaryContainer,
+                              Theme.of(context).colorScheme.primaryContainer,
                           shape: const RoundedRectangleBorder(
                             borderRadius:
-                            BorderRadius.all(Radius.circular(12.0)),
+                                BorderRadius.all(Radius.circular(12.0)),
                           )),
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) => SettingsPage(
-                                homePageState: this,
-                              )),
+                                    homePageState: this,
+                                  )),
                         );
                       }),
                 ),
@@ -379,10 +386,10 @@ class MyHomePageState extends State<MyHomePage> {
                       style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.only(top: 10, bottom: 10),
                           backgroundColor:
-                          Theme.of(context).colorScheme.primaryContainer,
+                              Theme.of(context).colorScheme.primaryContainer,
                           shape: const RoundedRectangleBorder(
                             borderRadius:
-                            BorderRadius.all(Radius.circular(12.0)),
+                                BorderRadius.all(Radius.circular(12.0)),
                           )),
                       onPressed: () {
                         Navigator.push(
@@ -399,32 +406,32 @@ class MyHomePageState extends State<MyHomePage> {
             ),
             Expanded(
                 child: Stack(
-                  children: [
-                    PersonView(
-                      personList: widget.personList,
-                      homePageState: this,
-                    ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Visibility(
-                            visible: _visibleWarning,
-                            child: Container(
-                              width: double.infinity,
-                              height: 40,
-                              color: Colors.redAccent,
-                              child: Center(
-                                child: Text(
-                                  _warningState,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 20),
-                                ),
-                              ),
-                            ))
-                      ],
-                    )
+              children: [
+                PersonView(
+                  personList: widget.personList,
+                  homePageState: this,
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Visibility(
+                        visible: _visibleWarning,
+                        child: Container(
+                          width: double.infinity,
+                          height: 40,
+                          color: Colors.redAccent,
+                          child: Center(
+                            child: Text(
+                              _warningState,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 20),
+                            ),
+                          ),
+                        ))
                   ],
-                )),
+                )
+              ],
+            )),
             const SizedBox(
               height: 4,
             ),
