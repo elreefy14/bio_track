@@ -275,7 +275,6 @@ class MyHomePageState extends State<MyHomePage> {
 
       for (var face in faces) {
         num randomNumber = 10000 + Random().nextInt(10000); // Random ID
-
         // Convert faceJpg and templates to Uint8List or base64
         Uint8List faceJpg = face['faceJpg'];
         Uint8List templates = face['templates'];
@@ -565,6 +564,10 @@ class MyHomePageState extends State<MyHomePage> {
             const SizedBox(
               height: 8,
             ),
+            Container(
+              height: 200,
+              child:  IdentificationTimeView(),
+            ),
             Expanded(
                 child: Stack(
                   children: [
@@ -615,6 +618,73 @@ class MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class IdentificationTimeView extends StatefulWidget {
+  const IdentificationTimeView({super.key});
+
+  @override
+  _IdentificationTimeViewState createState() => _IdentificationTimeViewState();
+}
+
+class _IdentificationTimeViewState extends State<IdentificationTimeView> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: _firestore.collection('identifications').snapshots(), // Firebase stream for real-time updates
+      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        var docs = snapshot.data!.docs;
+        return ListView.builder(
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            var doc = docs[index];
+            String name = doc['name'];
+            String time = doc['time'];
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: ListTile(
+                leading: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      time,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+                trailing: CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.green, // Customize the color here
+                  child: Text(
+                    name[0], // Display the first letter of the name
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

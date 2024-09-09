@@ -1,5 +1,7 @@
+
 import 'dart:async';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -66,8 +68,9 @@ class FaceRecognitionViewState extends State<FaceRecognitionView> {
     await faceDetectionViewController?.startCamera(cameraLens ?? 1);
   }
 
+
   Future<bool> onFaceDetected(faces) async {
-    if (_recognized == true) {
+    if (_recognized) {
       return false;
     }
 
@@ -81,58 +84,38 @@ class FaceRecognitionViewState extends State<FaceRecognitionView> {
     double maxSimilarity = -1;
     String maxSimilarityName = "";
     double maxLiveness = -1;
-    double maxYaw = -1;
-    double maxRoll = -1;
-    double maxPitch = -1;
-    // ignore: prefer_typing_uninitialized_variables
-    var enrolledFace, identifedFace;
-    if (faces.length > 0) {
+    if (faces.isNotEmpty) {
       var face = faces[0];
       for (var person in widget.personList) {
         double similarity = await _facesdkPlugin.similarityCalculation(
-                face['templates'], person.templates) ??
+            face['templates'], person.templates) ??
             -1;
         if (maxSimilarity < similarity) {
           maxSimilarity = similarity;
           maxSimilarityName = person.name;
           maxLiveness = face['liveness'];
-          maxYaw = face['yaw'];
-          maxRoll = face['roll'];
-          maxPitch = face['pitch'];
-          identifedFace = face['faceJpg'];
-          enrolledFace = person.faceJpg;
         }
       }
 
-      if (maxSimilarity > _identifyThreshold &&
-          maxLiveness > _livenessThreshold) {
+      if (maxSimilarity > _identifyThreshold && maxLiveness > _livenessThreshold) {
         recognized = true;
+
+        // Save to Firestore
+        final timestamp = DateTime.now().toIso8601String();
+        FirebaseFirestore.instance.collection('identifications').add({
+          'name': maxSimilarityName,
+          'time': timestamp,
+        });
       }
     }
 
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (!mounted) return false;
-      setState(() {
-        _recognized = recognized;
-        _identifiedName = maxSimilarityName;
-        _identifiedSimilarity = maxSimilarity.toString();
-        _identifiedLiveness = maxLiveness.toString();
-        _identifiedYaw = maxYaw.toString();
-        _identifiedRoll = maxRoll.toString();
-        _identifiedPitch = maxPitch.toString();
-        _enrolledFace = enrolledFace;
-        _identifiedFace = identifedFace;
-      });
-      if (recognized) {
-        faceDetectionViewController?.stopCamera();
-        setState(() {
-          _faces = null;
-        });
-      }
+    setState(() {
+      _recognized = recognized;
     });
 
     return recognized;
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -175,46 +158,46 @@ class FaceRecognitionViewState extends State<FaceRecognitionView> {
                           children: <Widget>[
                             _enrolledFace != null
                                 ? Column(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius:
-                                            BorderRadius.circular(8.0),
-                                        child: Image.memory(
-                                          _enrolledFace,
-                                          width: 160,
-                                          height: 160,
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        height: 5,
-                                      ),
-                                      const Text('Enrolled')
-                                    ],
-                                  )
-                                : const SizedBox(
-                                    height: 1,
+                              children: [
+                                ClipRRect(
+                                  borderRadius:
+                                  BorderRadius.circular(8.0),
+                                  child: Image.memory(
+                                    _enrolledFace,
+                                    width: 160,
+                                    height: 160,
                                   ),
+                                ),
+                                const SizedBox(
+                                  height: 5,
+                                ),
+                                const Text('Enrolled')
+                              ],
+                            )
+                                : const SizedBox(
+                              height: 1,
+                            ),
                             _identifiedFace != null
                                 ? Column(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius:
-                                            BorderRadius.circular(8.0),
-                                        child: Image.memory(
-                                          _identifiedFace,
-                                          width: 160,
-                                          height: 160,
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        height: 5,
-                                      ),
-                                      const Text('Identified')
-                                    ],
-                                  )
+                              children: [
+                                ClipRRect(
+                                  borderRadius:
+                                  BorderRadius.circular(8.0),
+                                  child: Image.memory(
+                                    _identifiedFace,
+                                    width: 160,
+                                    height: 160,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 5,
+                                ),
+                                const Text('Identified')
+                              ],
+                            )
                                 : const SizedBox(
-                                    height: 1,
-                                  )
+                              height: 1,
+                            )
                           ],
                         ),
                         const SizedBox(
@@ -307,7 +290,7 @@ class FaceRecognitionViewState extends State<FaceRecognitionView> {
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
-                                Theme.of(context).colorScheme.primaryContainer,
+                            Theme.of(context).colorScheme.primaryContainer,
                           ),
                           onPressed: () => faceRecognitionStart(),
                           child: const Text('Try again'),
@@ -399,7 +382,7 @@ class FacePainter extends CustomPainter {
         }
 
         TextSpan span =
-            TextSpan(style: TextStyle(color: color, fontSize: 20), text: title);
+        TextSpan(style: TextStyle(color: color, fontSize: 20), text: title);
         TextPainter tp = TextPainter(
             text: span,
             textAlign: TextAlign.left,
@@ -410,8 +393,8 @@ class FacePainter extends CustomPainter {
         paint.color = color;
         canvas.drawRect(
             Offset(face['x1'] / xScale, face['y1'] / yScale) &
-                Size((face['x2'] - face['x1']) / xScale,
-                    (face['y2'] - face['y1']) / yScale),
+            Size((face['x2'] - face['x1']) / xScale,
+                (face['y2'] - face['y1']) / yScale),
             paint);
       }
     }
