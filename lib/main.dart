@@ -10,8 +10,10 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:facesdk_plugin/facesdk_plugin.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
+import 'package:intl/intl.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -70,6 +72,8 @@ class MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> init() async {
+    DateTime now = DateTime.now();
+    String currentTime = DateFormat('HH:mm').format(now);
     int facepluginState = -1;
     String warningState = "";
     bool visibleWarning = false;
@@ -688,3 +692,52 @@ class _IdentificationTimeViewState extends State<IdentificationTimeView> {
     );
   }
 }
+
+class IdentificationService {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<bool> isUserAtCompanyLocation(
+      Position userPosition, String companyId) async {
+    DocumentSnapshot companySnapshot =
+    await _firestore.collection('companies').doc(companyId).get();
+
+    if (companySnapshot.exists) {
+      // Fetch company location and start time
+      Map<String, dynamic> companyData = companySnapshot.data() as Map<String, dynamic>;
+      double companyLat = companyData['latitude'];
+      double companyLng = companyData['longitude'];
+      String startTime = companyData['startTime'];
+
+      // Get the current time
+      DateTime now = DateTime.now();
+      String currentTime = DateFormat('HH:mm').format(DateTime.now());
+//Todo:handle 7wal il time dh
+      // Check if current time is after the company start time
+      //if (true) {
+      if (currentTime.compareTo(startTime) >= 0) {
+        // Calculate distance between user and company location
+        double distance = Geolocator.distanceBetween(
+            userPosition.latitude, userPosition.longitude, companyLat, companyLng);
+
+        if (distance <= 1000) {
+          return true; // User is within the 1000m radius of the company location
+        } else {
+          print('User is outside the company radius');
+          return false;
+        }
+      } else {
+        print('Current time is before company start time');
+        return false;
+      }
+    } else {
+      print('Company not found');
+      return false;
+    }
+  }
+}
+//i want to add fields to firebase 1 contain the company location
+//and another one contain the start time of the company
+//so that when user identify himself it will
+//check if current time -start time of the company and
+//check if user location in the company do that by add 1000 metre as square around the location of company
+//to check if user is in the coorect place

@@ -6,8 +6,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:facesdk_plugin/facedetection_interface.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:facesdk_plugin/facesdk_plugin.dart';
+import 'main.dart';
 import 'person.dart';
 
 // ignore: must_be_immutable
@@ -68,6 +71,40 @@ class FaceRecognitionViewState extends State<FaceRecognitionView> {
     await faceDetectionViewController?.startCamera(cameraLens ?? 1);
   }
 
+  Future<Position> getUserLocation() async {
+    // Request permission at runtime
+    var status = await Permission.location.request();
+    if (status.isGranted) {
+      // Location permission granted, get the current position
+      return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    } else if (status.isDenied) {
+      // Location permission denied, handle accordingly
+      throw Exception("Location permission denied");
+    } else if (status.isPermanentlyDenied) {
+      // Open app settings if permission is permanently denied
+      openAppSettings();
+    }
+
+    return Future.error("Location permissions are not granted");
+  }
+  void onUserFaceIdentified(Position userPosition, String companyId) async {
+    IdentificationService identificationService = IdentificationService();
+    bool isValid = await identificationService.isUserAtCompanyLocation(userPosition, companyId);
+
+    if (isValid) {
+      // Save identification time in Firebase
+      await FirebaseFirestore.instance.collection('identifications').add({
+        'name': 'user_id_here',
+        'companyId': companyId,
+        'time': DateTime.now().toString(),
+      });
+
+      print('Identification successful and recorded.');
+    } else {
+      print('Identification failed due to invalid time or location.');
+    }
+  }
+
 
   Future<bool> onFaceDetected(faces) async {
     if (_recognized) {
@@ -102,12 +139,16 @@ class FaceRecognitionViewState extends State<FaceRecognitionView> {
 
         // Save to Firestore
         final timestamp = DateTime.now().toIso8601String();
+        Position position =await getUserLocation();
+        onUserFaceIdentified(position,'holla');
         FirebaseFirestore.instance.collection('identifications').add({
           'name': maxSimilarityName,
           'time': timestamp,
         });
       }
     }
+
+
 
     setState(() {
       _recognized = recognized;
