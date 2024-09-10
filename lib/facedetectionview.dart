@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:facesdk_plugin/facedetection_interface.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:facesdk_plugin/facesdk_plugin.dart';
@@ -92,14 +93,44 @@ class FaceRecognitionViewState extends State<FaceRecognitionView> {
     bool isValid = await identificationService.isUserAtCompanyLocation(userPosition, companyId);
 
     if (isValid) {
-      // Save identification time in Firebase
-      await FirebaseFirestore.instance.collection('identifications').add({
-        'name': 'user_id_here',
-        'companyId': companyId,
-        'time': DateTime.now().toString(),
-      });
+      // Retrieve company start time
+      DocumentSnapshot companySnapshot = await FirebaseFirestore.instance.collection('companies').doc(companyId).get();
+      if (companySnapshot.exists) {
+        String companyStartTimeStr = companySnapshot['startTime']; // Should be "04:00"
 
-      print('Identification successful and recorded.');
+        // Parse the start time from Firebase (we assume this is in "HH:mm" format)
+        DateTime now = DateTime.now();
+        DateTime companyStartTime = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            int.parse(companyStartTimeStr.split(":")[0]), // hour
+            int.parse(companyStartTimeStr.split(":")[1])  // minute
+        );
+
+        // Get the current time
+        DateTime currentTime = DateTime.now();
+
+        // Calculate late time in minutes
+        Duration lateDuration = currentTime.difference(companyStartTime);
+        int lateMinutes = lateDuration.inMinutes > 0 ? lateDuration.inMinutes : 0; // if not late, set to 0
+
+        // Format the day_month_year variable
+        String dayMonthYear = '${now.day}-${now.month}-${now.year}';
+
+        // Save identification and late time in Firebase
+        await FirebaseFirestore.instance.collection('identifications').add({
+          'name': 'user_id_here',
+          'companyId': companyId,
+          'time': currentTime.toString(),
+          'lateTime': lateMinutes,
+          'day_month_year': dayMonthYear,
+        });
+
+        print('Identification successful and recorded. Late time: $lateMinutes minutes');
+      } else {
+        print('Company not found.');
+      }
     } else {
       print('Identification failed due to invalid time or location.');
     }
@@ -141,10 +172,10 @@ class FaceRecognitionViewState extends State<FaceRecognitionView> {
         final timestamp = DateTime.now().toIso8601String();
         Position position =await getUserLocation();
         onUserFaceIdentified(position,'holla');
-        FirebaseFirestore.instance.collection('identifications').add({
-          'name': maxSimilarityName,
-          'time': timestamp,
-        });
+        // FirebaseFirestore.instance.collection('identifications').add({
+        //   'name': maxSimilarityName,
+        //   'time': timestamp,
+        // });
       }
     }
 
@@ -427,7 +458,7 @@ class FacePainter extends CustomPainter {
         TextPainter tp = TextPainter(
             text: span,
             textAlign: TextAlign.left,
-            textDirection: TextDirection.ltr);
+            );
         tp.layout();
         tp.paint(canvas, Offset(face['x1'] / xScale, face['y1'] / yScale - 30));
 

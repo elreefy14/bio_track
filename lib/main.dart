@@ -569,7 +569,7 @@ class MyHomePageState extends State<MyHomePage> {
               height: 8,
             ),
             Container(
-              height: 200,
+              height: 330,
               child:  IdentificationTimeView(),
             ),
             Expanded(
@@ -652,36 +652,55 @@ class _IdentificationTimeViewState extends State<IdentificationTimeView> {
             var doc = docs[index];
             String name = doc['name'];
             String time = doc['time'];
+            String dayMonthYear = doc['day_month_year'];
+            int lateTime = doc['lateTime'] ?? 0; // Default to 0 if lateTime is null
+
+            // Change background color based on lateTime
+            bool isLate = lateTime > 0;
+            Color backgroundColor = isLate ? Colors.red[100]! : Colors.green[100]!;
+
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: ListTile(
-                leading: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      time,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: backgroundColor, // Change background color based on lateness
+                  borderRadius: BorderRadius.circular(15), // Rounded corners
                 ),
-                trailing: CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Colors.green, // Customize the color here
-                  child: Text(
-                    name[0], // Display the first letter of the name
-                    style: const TextStyle(color: Colors.white),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                  leading: CircleAvatar(
+                    radius: 16,
+                    backgroundColor: Colors.white, // Color of the circle background
+                    child: Text(
+                      (index + 1).toString().padLeft(2, '0'), // Display the item index
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                  ),
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(
+                    'Date: \n$dayMonthYear',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: isLate ? Colors.red : Colors.green,
+                    ),
+                  ),
+                    ],
+                  ),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        isLate ? '$lateTime mins late' : 'On time',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isLate ? Colors.red : Colors.green,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -692,6 +711,7 @@ class _IdentificationTimeViewState extends State<IdentificationTimeView> {
     );
   }
 }
+
 
 class IdentificationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -711,7 +731,7 @@ class IdentificationService {
       // Get the current time
       DateTime now = DateTime.now();
       String currentTime = DateFormat('HH:mm').format(DateTime.now());
-//Todo:handle 7wal il time dh
+      //Todo:handle 7war il time dh
       // Check if current time is after the company start time
       //if (true) {
       if (currentTime.compareTo(startTime) >= 0) {
